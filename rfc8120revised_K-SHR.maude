@@ -1,0 +1,1459 @@
+fmod PRIN is
+  pr NAT .
+  sorts Client Server Prin .
+  subsorts Client Server < Prin .
+  ops c ic : -> Client [ctor] .
+  ops s is : -> Server [ctor] .
+endfm
+
+fmod RAND is
+  pr NAT .
+  sort Rand .
+  op r : Nat -> Rand [ctor] .
+  op dr : -> Rand [ctor] . --- dummy
+endfm
+
+fmod PWD is
+  pr PRIN .
+  sort Pwd .
+  op pwd : Client Server -> Pwd [ctor] .
+  op h : Pwd Nat -> Pwd .
+endfm
+
+fmod BASE is
+  sort Base .
+  op g : -> Base [ctor] .
+endfm
+
+fmod VALUE is
+  pr RAND .
+  pr PWD .
+  pr BASE .
+  pr PWD .
+  sorts Value H3Value H4Value .
+  subsorts Rand Pwd Base < Value .
+  op _^_ : Value Value -> Value [prec 10] .
+  op _*_ : Value Value -> Value [assoc comm prec 20] .
+  op _/_ : Value Value -> Value [prec 20] .
+  op _+_ : Value Value -> Value [assoc comm prec 30] .
+  op h1 : Value -> Value .
+  op h2 : Value Value -> Value .
+  op h3 : Value Value Value -> H3Value .
+  op h4 : Value Value Value -> H4Value .
+  vars X Y Z : Value .
+  eq (X ^ Y) * (X ^ Z) = X ^ (Y + Z) .
+  eq (X ^ Y) ^ Z = X ^ (Y * Z) .
+  eq X * (Y / Z) = (X * Y) / Z .
+  eq (X * Y) / Y = X .
+endfm
+
+fmod MSG is
+  pr VALUE .
+  sorts Msg Msg1 Msg2 Msg3 Msg4 .
+  subsorts Msg1 Msg2 Msg3 Msg4 < Msg .
+  op m1 : Client Client Server Nat Client Value -> Msg1 [ctor] .
+  op m2 : Server Server Client Nat Value -> Msg2 [ctor] .
+  op m3 : Client Client Server Nat H4Value -> Msg3 [ctor] .
+  op m4 : Server Server Client Nat H3Value -> Msg4 [ctor] .
+endfm
+
+fmod EXCKEY is
+  pr VALUE .
+  sort Exckey . 
+  op exk : Prin Prin Nat Value -> Exckey [ctor] .
+endfm
+
+fmod SOUP {D :: TRIV} is
+  sort Soup{D} .
+  subsort D$Elt < Soup{D} .
+  op empty : -> Soup{D} [ctor] .
+  op _ _ : Soup{D} Soup{D} -> Soup{D} [ctor assoc comm id: empty] .
+  op _\in_ : D$Elt Soup{D} -> Bool .
+  var S : Soup{D} .
+  var E : D$Elt .
+  eq E E = E . *** idempotent
+  eq E \in (E S) = true .
+  eq E \in S = false [owise] .
+endfm
+
+fmod SEQ {D :: TRIV} is
+  sort Seq{D} .
+  op nil : -> Seq{D} [ctor] .
+  op _|_ : D$Elt Seq{D} -> Seq{D} [ctor] .
+endfm
+
+view Rand from TRIV to RAND is
+  sort Elt to Rand .
+endv
+
+view Prin from TRIV to PRIN is
+  sort Elt to Prin .
+endv
+
+view Value from TRIV to VALUE is
+  sort Elt to Value .
+endv
+
+view H3Value from TRIV to VALUE is
+  sort Elt to H3Value .
+endv
+
+view H4Value from TRIV to VALUE is
+  sort Elt to H4Value .
+endv
+
+view Msg from TRIV to MSG is
+  sort Elt to Msg .
+endv
+
+view Exckey from TRIV to EXCKEY is
+  sort Elt to Exckey .
+endv
+
+mod MAP4HTTP is
+  pr SOUP{Prin} .
+  *** pr SOUP{Rand} .
+  pr SOUP{Value} .
+  pr SOUP{H3Value} .
+  pr SOUP{H4Value} .
+  pr SEQ{Rand} .
+  pr SOUP{Msg} .
+  pr SOUP{Exckey} .
+  pr SOUP{Nat} .
+  ***
+  sorts OCom Sys .
+  subsorts OCom < Sys .
+  ***
+  op none : -> Sys [ctor] .
+  op __ : Sys Sys -> Sys [ctor assoc comm id: none] .
+  *** Observable Components
+  op sids:_ : Soup{Nat} -> OCom [ctor] .
+  op sid:_ : Nat -> OCom [ctor] .
+  op cs:_ : Soup{Prin} -> OCom [ctor] .
+  op ss:_ : Soup{Prin} -> OCom [ctor] .
+  op crl:_ : Seq{Rand} -> OCom [ctor] .
+  op srl:_ : Seq{Rand} -> OCom [ctor] .
+  op kcs:_ : Soup{Value} -> OCom [ctor] .
+  op kss:_ : Soup{Value} -> OCom [ctor] .
+  op vkcs:_ : Soup{H4Value} -> OCom [ctor] .
+  op vkss:_ : Soup{H3Value} -> OCom [ctor] .
+  op rm1[_,_,_]:_ : Prin Prin Nat Bool -> OCom [ctor] .
+  op rm2[_,_,_]:_ : Prin Prin Nat Bool -> OCom [ctor] .
+  op rm3[_,_,_]:_ : Prin Prin Nat Bool -> OCom [ctor] .
+  op rm4[_,_,_]:_ : Prin Prin Nat Bool -> OCom [ctor] .
+  op sr[_,_]:_ : Prin Nat Rand -> OCom [ctor] .
+  op crs:_ : Soup{Value} -> OCom [ctor] .
+  op srs:_ : Soup{Value} -> OCom [ctor] .
+  op ks:_ : Soup{Value} -> OCom [ctor] .
+  op pws:_ : Soup{Value} -> OCom [ctor] .
+  op exks:_ : Soup{Exckey} -> OCom [ctor] .
+  op nw:_ : Soup{Msg} -> OCom [ctor] .
+  op done[_,_,_]:_ : Prin Prin Nat Bool -> OCom [ctor] .
+  *** Maude variables
+  vars SID SID1 : Nat .
+  vars C C1 C2 C3 : Client .
+  var Cs : Soup{Prin} .
+  vars S S1 S2 : Server .
+  var Ss : Soup{Prin} .
+  vars R1 R2 R : Rand .
+  vars T1 T2 KC1 KS1 Z KC KS K K1 K2 : Value .
+  vars KCs KSs UKCs UKSs Ks Rs PWs : Soup{Value} .
+  var PW : Pwd .
+  var VKC : H4Value .
+  var VKCs : Soup{H4Value} .
+  var VKS : H3Value .
+  var VKSs : Soup{H3Value} .
+  var RS : Seq{Rand} .
+  var EXK : Exckey .
+  var EXKs : Soup{Exckey} .
+  var NW : Soup{Msg} .
+  var SYS : Sys .
+  var SIDs : Soup{Nat} .
+  *** initial state
+  op init : -> Sys .
+  eq init =
+
+sids: (0 1) sid: 2 cs: (c ic) ss: (s is) 
+crl: nil srl: nil 
+kcs: (g ^ r(0) g ^ r(1)) 
+kss: (g ^ (r(2) *(pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) 
+vkcs: (h4(g ^ r(0), g ^ (r(2) *(pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) *
+    (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) 
+vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) 
+crs: empty 
+srs: (r(2) r(3)) 
+ks: g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))) 
+pws: pwd(c, s) 
+exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) 
+      exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) 
+nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) 
+     m2(s, s, c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) 
+     m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) 
+     m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) 
+     m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) 
+     m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) 
+     m1(c, c, s, 0, c, g ^ r(0)) 
+     m1(c, c, s, 1, c, g ^ r(1))) 
+(sr[s,0]: r(2)) (sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) 
+(rm1[s,c,0]: true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) 
+(rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) 
+(rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) 
+(rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) 
+(done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false .
+
+  ---- state 2200
+***(
+sids: (0 1) sid: 1 cs: (c ic) ss: (s is) crl: (r(1) | nil) srl: (r(3) | nil) kcs: g ^ r(0) kss: g ^ (
+    r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (
+    r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) vkss: h3(g ^ r(0),
+    g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) *
+    h1(g ^ r(0)))))))) crs: empty srs: r(2) ks: empty pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) *
+    (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) *
+    (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s)
+    + r(0) * h1(g ^ r(0))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(
+    pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(s, s, c, 0, h3(g ^ r(
+    0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0))) (sr[s,0]: r(2)) (sr[s,1]: dr) (sr[s,2]: dr) (
+    sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: false) (
+    rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,
+    ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: false) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false)
+    (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,
+    0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]:
+    false) (rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[
+    ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]:
+    false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]:
+    false .
+)
+***(
+  (sid: 0) (cs: (c ic)) (ss: (s is)) (sids: (0 1))
+            (crl: (r(0) | r(1) | nil)) (srl: (r(2) | r(3) | nil))
+            (kcs: empty) (kss: empty) (vkcs: empty) (vkss: empty)
+            (rm1[s,c,0]: false) (rm1[s,ic,0]: false) 
+            (rm1[is,c,0]: false) (rm1[is,ic,0]: false) 
+            (rm1[s,c,1]: false) (rm1[s,ic,1]: false) 
+            (rm1[is,c,1]: false) (rm1[is,ic,1]: false) 
+            (rm2[c,s,0]: false) (rm2[c,is,0]: false) 
+            (rm2[ic,s,0]: false) (rm2[ic,is,0]: false) 
+            (rm2[c,s,1]: false) (rm2[c,is,1]: false) 
+            (rm2[ic,s,1]: false) (rm2[ic,is,1]: false) 
+            (rm3[s,c,0]: false) (rm3[s,ic,0]: false) 
+            (rm3[is,c,0]: false) (rm3[is,ic,0]: false) 
+            (rm3[s,c,1]: false) (rm3[s,ic,1]: false) 
+            (rm3[is,c,1]: false) (rm3[is,ic,1]: false) 
+            (rm4[c,s,0]: false) (rm4[c,is,0]: false) 
+            (rm4[ic,s,0]: false) (rm4[ic,is,0]: false) 
+            (rm4[c,s,1]: false) (rm4[c,is,1]: false) 
+            (rm4[ic,s,1]: false) (rm4[ic,is,1]: false) 
+            (sr[s,0]: dr) (sr[s,1]: dr) (sr[s,2]: dr) (sr[s,3]: dr) 
+            (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) 
+            (crs: empty) (srs: empty) (pws: empty) (ks: empty)
+            (exks: empty) (nw: empty) 
+
+               (done[c,s,0]: false) (done[c,is,0]: false) 
+            (done[ic,s,0]: false) (done[ic,is,0]: false) 
+           (done[c,s,1]: false) (done[c,is,1]: false) 
+            (done[ic,s,1]: false) (done[ic,is,1]: false)  .
+
+)
+  *** transitions
+  crl [send1] :
+  (sid: SID) (cs: (C Cs)) (ss: (S Ss)) (crl: (R1 | RS)) (kcs: KCs) (nw: NW)
+  =>
+  (sid: (SID + 1)) (cs: (C Cs)) (ss: (S Ss)) (crl: RS) (kcs: (g ^ R1 KCs))
+  (nw: (m1(C,C,S,SID,C,g ^ R1) NW))
+  if not (C == ic and S == is) .
+  ***
+  rl [send2] :
+  (srl: (R2 | RS)) (sr[S,SID]: R) (kss: KSs) (rm1[S,C,SID]: false)
+  (nw: (m1(C1,C,S,SID,C,KC1) NW))
+  (srs: Rs)
+  =>
+  (srl: RS) (sr[S,SID]: R2)
+  (kss: ((g ^ pwd(C,S) * KC1 ^ h1(KC1)) ^ R2 KSs))
+  (rm1[S,C,SID]: true)
+  (nw: (m2(S,S,C,SID,(g ^ pwd(C,S) * KC1 ^ h1(KC1)) ^ R2)
+        m1(C1,C,S,SID,C,KC1) NW))
+  (srs: (if not (C == ic or S == is) then (R2 Rs) else Rs fi)).
+
+
+  ***
+  rl [send3] :
+  (vkcs: VKCs) (rm2[C,S,SID]: false)
+  (nw: (m2(S1,S,C,SID,KS1) m1(C,C,S,SID,C,g ^ R1) NW))
+  =>
+  (vkcs: (h4(g ^ R1,KS1,
+             (KS1 ^ ((R1 + h2(g ^ R1,KS1)) / (R1 * h1(g ^ R1) + pwd(C,S)))) ^ h(pwd(C,S),SID))
+          VKCs))
+  (rm2[C,S,SID]: true)
+  (nw: (m3(C,C,S,SID,
+          h4(g ^ R1,KS1,
+             (KS1 ^ ((R1 + h2(g ^ R1,KS1)) / (R1 * h1(g ^ R1) + pwd(C,S)))) ^ h(pwd(C,S),SID)) )
+        m2(S1,S,C,SID,KS1) m1(C,C,S,SID,C,g ^ R1) NW)) .
+  ***
+  crl [send4] :
+  (sr[S,SID]: R) (vkss: VKSs) (rm3[S,C,SID]: false) (exks: EXKs)
+  (nw: (m3(C2,C,S,SID,VKC) m2(S,S,C,SID,KS1) m1(C1,C,S,SID,C,KC1) NW))
+  =>
+  (sr[S,SID]: R) (vkss: (h3(KC1,KS1,(KC1 * g ^ h2(KC1,KS1)) ^ R) VKSs))
+  (rm3[S,C,SID]: true)
+  (exks: (exk(S,C,SID,((KC1 * g ^ h2(KC1,KS1)) ^ R) ^ h(pwd(C,S),SID)) EXKs))
+  (nw: (m4(S,S,C,SID,h3(KC1,KS1,((KC1 * g ^ h2(KC1,KS1)) ^ R) ^ h(pwd(C,S),SID)))
+        m3(C2,C,S,SID,VKC) m2(S,S,C,SID,KS1) m1(C1,C,S,SID,C,KC1) NW))
+  if VKC = h4(KC1,KS1,((KC1 * g ^ h2(KC1,KS1)) ^ R) ^ h(pwd(C,S),SID)) .
+  ***
+  crl [rec4] :
+  (rm4[C,S,SID]: false) (exks: EXKs)
+  (nw: (m4(S2,S,C,SID,VKS) m3(C,C,S,SID,VKC)
+        m2(S1,S,C,SID,KS1) m1(C,C,S,SID,C,g ^ R1) NW))
+  =>
+  (rm4[C,S,SID]: true)
+  (exks: (exk(C,S,SID,(KS1 ^ ((R1 + h2(g ^ R1,KS1)) / (R1 * h1(g ^ R1) + pwd(C,S)))) ^ h(pwd(C,S),SID))
+          EXKs))
+  (nw: (m4(S2,S,C,SID,VKS) m3(C,C,S,SID,VKC)
+        m2(S1,S,C,SID,KS1) m1(C,C,S,SID,C,g ^ R1) NW))
+  if VKS = h3(g ^ R1,KS1,
+              (KS1 ^ ((R1 + h2(g ^ R1,KS1)) / (R1 * h1(g ^ R1) + pwd(C,S)))) ^ h(pwd(C,S),SID)) .
+
+
+  rl [done] :
+  (rm4[C,S,SID]: true) (done[C,S,SID]: false)
+  (pws: PWs)  
+  =>
+  (rm4[C,S,SID]: true) (done[C,S,SID]: true)
+  (pws: (pwd(C,S) PWs))  .
+
+  ***
+  crl [fake1] :
+  (cs: (C Cs)) (ss: (S Ss)) (sids: (SID1 SIDs))
+  (nw: (m1(C1,C2,S1,SID,C3,KC1) NW))
+  =>
+  (cs: (C Cs)) (ss: (S Ss)) (sids: (SID1 SIDs))
+  (nw: (m1(ic,C,S,SID1,C,KC1) m1(C1,C2,S1,SID,C3,KC1) NW))
+  if not (C1 == ic) /\ not (C == ic or S == is) .
+  ***
+  crl [fake1-2] :
+  (sid: SID) (cs: (C Cs)) (ss: (S Ss)) (crl: (R1 | RS)) 
+  (sids: (SID1 SIDs)) (nw: NW)
+  =>
+  (sid: SID) (cs: (C Cs)) (ss: (S Ss)) (crl: RS) 
+  (sids: (SID1 SIDs)) (nw: (m1(ic,C,S,SID1,C,g ^ R1) NW))
+  if not (C == ic or S == is) .
+
+  crl [fake2] :
+  (cs: (C Cs)) (ss: (S Ss)) (sids: (SID1 SIDs))
+  (nw: (m2(S1,S2,C1,SID,KS1) NW))
+  =>
+  (cs: (C Cs)) (ss: (S Ss)) (sids: (SID1 SIDs))
+  (nw: (m2(is,S,C,SID1,KS1) m2(S1,S2,C1,SID,KS1) NW))
+  if not (S1 == is) /\ not (C == ic or S == is) .
+
+  crl [fake2-1] :
+  (srl: (R2 | RS)) (pws: (PW PWs)) (ks: Ks)
+  (nw: (m1(C1,C,S,SID,C,KC1) NW))
+  =>
+  (srl: RS) (pws: (PW PWs))
+  (ks: ((((KC1 * g ^ h2(KC1,(g ^ PW * KC1 ^ h1(KC1)) ^ R2)) ^ R2) ^ h(PW,SID)) Ks))
+  (nw: (m2(is,S,C,SID,((g ^ PW * KC1 ^ h1(KC1)) ^ R2) )
+        m1(C1,C,S,SID,C,KC1) NW))
+  if not (C == ic or S == is) .
+
+  ***
+  crl [fake3] :
+  (cs: (C Cs)) (ss: (S Ss)) (sids: (SID1 SIDs))
+  (nw: (m3(C1,C2,S1,SID,VKC) NW))
+  =>
+  (cs: (C Cs)) (ss: (S Ss)) (sids: (SID1 SIDs))
+  (nw: (m3(ic,C,S,SID1,VKC) m3(C1,C2,S1,SID,VKC) NW))
+  if not (C1 == ic) /\ not (C == ic or S == is) .
+  ***
+  crl [fake3-2] :
+  (ks: (K Ks))
+  (nw: (m2(S1,S,C,SID,KS1) m1(C1,C,S,SID,C,KC1) NW))
+  =>
+  (ks: (K Ks))
+  (nw: (m3(ic,C,S,SID,h4(KC1,KS1,K))
+        m2(S1,S,C,SID,KS1) m1(C1,C,S,SID,C,KC1) NW))
+  if not (S == is or C == ic) .
+
+  ***
+  crl [fake4] :
+  (cs: (C Cs)) (ss: (S Ss)) (sids: (SID1 SIDs))
+  (nw: (m4(S1,S2,C1,SID,VKS) NW))
+  =>
+  (cs: (C Cs)) (ss: (S Ss)) (sids: (SID1 SIDs))
+  (nw: (m4(is,S,C,SID1,VKS) m4(S1,S2,C1,SID,VKS) NW))
+  if not (S1 == is) /\ not (C == ic or S == is) .
+  ***
+  crl [fake4-2] :
+  (ks: (K Ks))
+  (nw: (m3(C2,C,S,SID,VKC) m2(S1,S,C,SID,KS1)
+        m1(C1,C,S,SID,C,KC1) NW))
+  =>
+  (ks: (K Ks))
+  (nw: (m4(is,S,C,SID,h3(KC1,KS1,K)) m3(C2,C,S,SID,VKC) 
+        m2(S1,S,C,SID,KS1) m1(C1,C,S,SID,C,KC1) NW))
+  if not (S == is or C == ic) /\ VKC = h4(KC1,KS1,K) .
+  ***
+
+  rl [forge-key1] :
+  (kcs: (KC KCs)) (kss: (KS KSs)) (crs: (R Rs)) (pws: (PW PWs))
+  (sids: (SID1 SIDs)) (ks: Ks) 
+  =>
+  (kcs: (KC KCs)) (kss: (KS KSs)) (crs: (R Rs)) (pws: (PW PWs))
+  (sids: (SID1 SIDs))
+  (ks: (((KS ^ ((R + h2(KC,KS)) / (R * h1(KC) + PW))) ^ h(PW,SID1)) Ks)) .
+  ***
+
+  rl [forge-key2] :
+  (kcs: (KC KCs)) (kss: (KS KSs)) (srs: (R Rs)) (pws: (PW PWs))
+  (sids: (SID1 SIDs)) (ks: Ks)
+  =>
+  (kcs: (KC KCs)) (kss: (KS KSs)) (srs: (R Rs)) (pws: (PW PWs))
+  (sids: (SID1 SIDs))
+  (ks: ((((KC * g ^ h2(KC,KS)) ^ R) ^ h(PW,SID1)) Ks)) .
+
+  
+endm
+
+search [2] in MAP4HTTP : init
+=>* (exks: (exk(C,S,SID,K1) exk(S,C,SID,K2) EXKs)) (ks: (K1 K2 Ks)) SYS
+such that (not K1 == K2) /\ (not C == ic) /\ (not S == is) .
+
+
+eof
+
+***(
+Solution 1 (state 139776)
+states: 139777  rewrites: 13616234 in 19120ms cpu (19129ms real) (712146 rewrites/second)
+SYS --> sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g
+    ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) +
+    h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: (h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) h3(g ^ r(0),
+    g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * (r(0) + h2(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) *
+    h1(g ^ r(1))))))))) crs: empty srs: (r(2) r(3)) pws: pwd(c, s) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) *
+    h1(g ^ r(0))))) m2(s, s, c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(
+    2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s)
+    + r(0) * h1(g ^ r(0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3)
+    * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m3(ic, c, s, 1, h4(g ^
+    r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0), g ^ (r(3)
+    * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(s,
+    s, c, 1, h3(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^
+    r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(
+    1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(
+    1))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1)) m1(ic, c, s, 1, c, g ^ r(0))) (sr[s,0]: r(2)) (
+    sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]:
+    true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[
+    is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]:
+    false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (
+    rm3[s,c,1]: true) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,
+    0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: true) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (
+    rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,
+    1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]:
+    false) done[ic,is,1]: false
+Ks --> (empty).Soup{Value}
+K1 --> g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))))))
+K2 --> g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))))))
+EXKs --> exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0))))))))
+C --> c
+S --> s
+SID --> 1
+
+Solution 2 (state 960364)
+states: 960365  rewrites: 119774323 in 4126060ms cpu (4126088ms real) (29028 rewrites/second)
+SYS --> sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g
+    ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) +
+    h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: (h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) h3(g ^ r(0),
+    g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * (r(0) + h2(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) *
+    h1(g ^ r(1))))))))) crs: empty srs: (r(2) r(3)) pws: pwd(c, s) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) *
+    h1(g ^ r(0))))) m2(s, s, c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(
+    2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s)
+    + r(0) * h1(g ^ r(0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3)
+    * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m3(ic, c, s, 1, h4(g ^
+    r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0), g ^ (r(3)
+    * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(s,
+    s, c, 1, h3(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^
+    r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(
+    1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(
+    1))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1)) m1(ic, c, s, 1, c, g ^ r(0))) (sr[s,0]: r(2)) (
+    sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]:
+    true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[
+    is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]:
+    false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (
+    rm3[s,c,1]: true) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,
+    0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: true) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (
+    rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,
+    1]: true) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]:
+    false) done[ic,is,1]: false
+Ks --> (empty).Soup{Value}
+K1 --> g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))))))
+K2 --> g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))))))
+EXKs --> exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0))))))))
+C --> c
+S --> s
+SID --> 1
+Maude> show path 139776 .
+state 0, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(
+    1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) +
+    r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs:
+    empty srs: (r(2) r(3)) ks: g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g
+    ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(s, s,
+    c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) *
+    h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1)
+    * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) *
+    h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m1(c, c, s, 0, c, g ^ r(
+    0)) m1(c, c, s, 1, c, g ^ r(1))) (sr[s,0]: r(2)) (sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,
+    1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]:
+    false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (
+    rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,
+    0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (
+    rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,
+    1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]:
+    false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (
+    done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ crl exks: EXKs nw: (NW m2(S1, S, C, SID, KS1) m3(C, C, S, SID, VKC) m4(S2, S, C, SID, VKS) m1(C, C, S, SID, C, g ^
+    R1)) rm4[C,S,SID]: false => (exks: (EXKs exk(C, S, SID, (KS1 ^ ((R1 + h2(g ^ R1, KS1)) / (pwd(C, S) + R1 * h1(g ^
+    R1)))) ^ h(pwd(C, S), SID))) nw: ((((NW m1(C, C, S, SID, C, g ^ R1)) m2(S1, S, C, SID, KS1)) m3(C, C, S, SID, VKC))
+    m4(S2, S, C, SID, VKS))) rm4[C,S,SID]: true if VKS = h3(g ^ R1, KS1, (KS1 ^ ((R1 + h2(g ^ R1, KS1)) / (pwd(C, S) +
+    R1 * h1(g ^ R1)))) ^ h(pwd(C, S), SID)) [label rec4] . ]===>
+state 2, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(
+    1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) +
+    r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs:
+    empty srs: (r(2) r(3)) ks: g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g
+    ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(c, s, 1, g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (
+    pwd(c, s) + r(1) * h1(g ^ r(1)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(s, s,
+    c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) *
+    h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1)
+    * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) *
+    h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m1(c, c, s, 0, c, g ^ r(
+    0)) m1(c, c, s, 1, c, g ^ r(1))) (sr[s,0]: r(2)) (sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,
+    1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]:
+    false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (
+    rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,
+    0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (
+    rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,
+    1]: true) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false)
+    (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (done[
+    ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ crl sids: (SID1 SIDs) cs: (C Cs) ss: (S Ss) nw: (NW m1(C1, C2, S1, SID, C3, KC1)) => cs: (C Cs) ss: (S Ss) sids: (
+    SID1 SIDs) nw: ((NW m1(C1, C2, S1, SID, C3, KC1)) m1(ic, C, S, SID1, C, KC1)) if not C1 == ic = true /\ not (C ==
+    ic or S == is) = true [label fake1] . ]===>
+state 68, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(
+    1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) +
+    r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs:
+    empty srs: (r(2) r(3)) ks: g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g
+    ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(c, s, 1, g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (
+    pwd(c, s) + r(1) * h1(g ^ r(1)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(s, s,
+    c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) *
+    h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1)
+    * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) *
+    h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m1(c, c, s, 0, c, g ^ r(
+    0)) m1(c, c, s, 1, c, g ^ r(1)) m1(ic, c, s, 1, c, g ^ r(0))) (sr[s,0]: r(2)) (sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,
+    3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: true) (rm1[s,
+    ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]:
+    false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[
+    ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]:
+    false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (
+    rm4[c,s,0]: true) (rm4[c,s,1]: true) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]:
+    false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (
+    done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ rl sids: (SID1 SIDs) kcs: (KCs KC) kss: (KSs KS) srs: (R Rs) ks: Ks pws: (PWs PW) => kcs: (KCs KC) kss: (KSs KS)
+    srs: (R Rs) pws: (PWs PW) sids: (SID1 SIDs) ks: (Ks ((KC * g ^ h2(KC, KS)) ^ R) ^ h(PW, SID1)) [label forge-key2] .
+    ]===>
+state 1208, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) *
+    (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s)
+    + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs:
+    empty srs: (r(2) r(3)) ks: (g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g
+    ^ r(1))))))) g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))
+    pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0)))))))) exk(c, s, 1, g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1)
+    * h1(g ^ r(1)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(s, s, c, 1, g ^ (r(3)
+    * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g
+    ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m3(c, c, s, 1,
+    h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^
+    (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^
+    r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(
+    is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(
+    g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(
+    1)) m1(ic, c, s, 1, c, g ^ r(0))) (sr[s,0]: r(2)) (sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[
+    is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]:
+    false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (
+    rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,
+    0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (
+    rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,
+    1]: true) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false)
+    (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (done[
+    ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ crl ks: (Ks K) nw: (NW m2(S1, S, C, SID, KS1) m1(C1, C, S, SID, C, KC1)) => ks: (Ks K) nw: (((NW m1(C1, C, S, SID,
+    C, KC1)) m2(S1, S, C, SID, KS1)) m3(ic, C, S, SID, h4(KC1, KS1, K))) if not (C == ic or S == is) = true [label
+    fake3-2] . ]===>
+state 14677, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) *
+    (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s)
+    + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs:
+    empty srs: (r(2) r(3)) ks: (g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g
+    ^ r(1))))))) g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))
+    pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0)))))))) exk(c, s, 1, g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1)
+    * h1(g ^ r(1)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(s, s, c, 1, g ^ (r(3)
+    * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g
+    ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m3(c, c, s, 1,
+    h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^
+    (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m3(ic, c, s, 1, h4(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^
+    r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(
+    s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g
+    ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) +
+    r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(
+    1))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1)) m1(ic, c, s, 1, c, g ^ r(0))) (sr[s,0]: r(2)) (
+    sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]:
+    true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[
+    is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]:
+    false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (
+    rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,
+    0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: true) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (
+    rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,
+    1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]:
+    false) done[ic,is,1]: false
+===[ crl vkss: VKSs exks: EXKs nw: (NW m2(S, S, C, SID, KS1) m3(C2, C, S, SID, VKC) m1(C1, C, S, SID, C, KC1)) (sr[S,
+    SID]: R) rm3[S,C,SID]: false => (vkss: (VKSs h3(KC1, KS1, (KC1 * g ^ h2(KC1, KS1)) ^ R)) (exks: (EXKs exk(S, C,
+    SID, ((KC1 * g ^ h2(KC1, KS1)) ^ R) ^ h(pwd(C, S), SID))) nw: ((((NW m1(C1, C, S, SID, C, KC1)) m2(S, S, C, SID,
+    KS1)) m3(C2, C, S, SID, VKC)) m4(S, S, C, SID, h3(KC1, KS1, ((KC1 * g ^ h2(KC1, KS1)) ^ R) ^ h(pwd(C, S), SID)))))
+    rm3[S,C,SID]: true) sr[S,SID]: R if VKC = h4(KC1, KS1, ((KC1 * g ^ h2(KC1, KS1)) ^ R) ^ h(pwd(C, S), SID)) [label
+    send4] . ]===>
+state 139776, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2)
+    * (pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2)
+    * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) +
+    r(0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1)
+    * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: (h3(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) h3(
+    g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * (r(0) + h2(g ^ r(0), g ^ (r(3) * (pwd(c, s) +
+    r(1) * h1(g ^ r(1))))))))) crs: empty srs: (r(2) r(3)) ks: (g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0), g ^
+    (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))) g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(
+    c, s) + r(1) * h1(g ^ r(1)))))))) pws: pwd(c, s) 
+    exks: (
+    exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) 
+    exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) 
+    exk(s, c, 1, g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))))))))
+    exk(c, s, 1, g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))))))) 
+
+     nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g
+    ^ r(0))))) m2(s, s, c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(
+    pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m3(ic, c, s, 1, h4(g ^ r(
+    0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0), g ^ (r(3) *
+    (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))),
+    g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(s, s, c,
+    1, h3(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0),
+    g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) *
+    h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(
+    1))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1)) m1(ic, c, s, 1, c, g ^ r(0))) (sr[s,0]: r(2)) (
+    sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]:
+    true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[
+    is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]:
+    false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (
+    rm3[s,c,1]: true) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,
+    0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: true) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (
+    rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,
+    1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]:
+    false) done[ic,is,1]: false
+Maude> show path 960364 .
+state 0, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(
+    1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) +
+    r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs:
+    empty srs: (r(2) r(3)) ks: g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g
+    ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(s, s,
+    c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) *
+    h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1)
+    * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) *
+    h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m1(c, c, s, 0, c, g ^ r(
+    0)) m1(c, c, s, 1, c, g ^ r(1))) (sr[s,0]: r(2)) (sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,
+    1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]:
+    false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (
+    rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,
+    0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (
+    rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,
+    1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]:
+    false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (
+    done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ crl exks: EXKs nw: (NW m2(S1, S, C, SID, KS1) m3(C, C, S, SID, VKC) m4(S2, S, C, SID, VKS) m1(C, C, S, SID, C, g ^
+    R1)) rm4[C,S,SID]: false => (exks: (EXKs exk(C, S, SID, (KS1 ^ ((R1 + h2(g ^ R1, KS1)) / (pwd(C, S) + R1 * h1(g ^
+    R1)))) ^ h(pwd(C, S), SID))) nw: ((((NW m1(C, C, S, SID, C, g ^ R1)) m2(S1, S, C, SID, KS1)) m3(C, C, S, SID, VKC))
+    m4(S2, S, C, SID, VKS))) rm4[C,S,SID]: true if VKS = h3(g ^ R1, KS1, (KS1 ^ ((R1 + h2(g ^ R1, KS1)) / (pwd(C, S) +
+    R1 * h1(g ^ R1)))) ^ h(pwd(C, S), SID)) [label rec4] . ]===>
+state 2, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(
+    1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) +
+    r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs:
+    empty srs: (r(2) r(3)) ks: g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g
+    ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(c, s, 1, g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (
+    pwd(c, s) + r(1) * h1(g ^ r(1)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(s, s,
+    c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) *
+    h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1)
+    * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) *
+    h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m1(c, c, s, 0, c, g ^ r(
+    0)) m1(c, c, s, 1, c, g ^ r(1))) (sr[s,0]: r(2)) (sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,
+    1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]:
+    false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (
+    rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,
+    0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (
+    rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,
+    1]: true) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false)
+    (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (done[
+    ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ rl pws: PWs (rm4[C,S,SID]: true) done[C,S,SID]: false => (pws: (PWs pwd(C, S)) done[C,S,SID]: true) rm4[C,S,SID]:
+    true [label done] . ]===>
+state 65, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(
+    1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) +
+    r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs:
+    empty srs: (r(2) r(3)) ks: g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g
+    ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(c, s, 1, g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (
+    pwd(c, s) + r(1) * h1(g ^ r(1)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(s, s,
+    c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) *
+    h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1)
+    * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) *
+    h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m1(c, c, s, 0, c, g ^ r(
+    0)) m1(c, c, s, 1, c, g ^ r(1))) (sr[s,0]: r(2)) (sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,
+    1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]:
+    false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (
+    rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,
+    0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (
+    rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,
+    1]: true) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false)
+    (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: true) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,
+    s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ crl sids: (SID1 SIDs) cs: (C Cs) ss: (S Ss) nw: (NW m1(C1, C2, S1, SID, C3, KC1)) => cs: (C Cs) ss: (S Ss) sids: (
+    SID1 SIDs) nw: ((NW m1(C1, C2, S1, SID, C3, KC1)) m1(ic, C, S, SID1, C, KC1)) if not C1 == ic = true /\ not (C ==
+    ic or S == is) = true [label fake1] . ]===>
+state 1098, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) *
+    (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s)
+    + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs:
+    empty srs: (r(2) r(3)) ks: g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g
+    ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(c, s, 1, g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (
+    pwd(c, s) + r(1) * h1(g ^ r(1)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(s, s,
+    c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) *
+    h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1)
+    * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) *
+    h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m1(c, c, s, 0, c, g ^ r(
+    0)) m1(c, c, s, 1, c, g ^ r(1)) m1(ic, c, s, 1, c, g ^ r(0))) (sr[s,0]: r(2)) (sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,
+    3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: true) (rm1[s,
+    ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]:
+    false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[
+    ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]:
+    false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (
+    rm4[c,s,0]: true) (rm4[c,s,1]: true) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]:
+    false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: true) (done[c,is,0]: false) (
+    done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ rl sids: (SID1 SIDs) kcs: (KCs KC) kss: (KSs KS) srs: (R Rs) ks: Ks pws: (PWs PW) => kcs: (KCs KC) kss: (KSs KS)
+    srs: (R Rs) pws: (PWs PW) sids: (SID1 SIDs) ks: (Ks ((KC * g ^ h2(KC, KS)) ^ R) ^ h(PW, SID1)) [label forge-key2] .
+    ]===>
+state 12984, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) *
+    (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s)
+    + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs:
+    empty srs: (r(2) r(3)) ks: (g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g
+    ^ r(1))))))) g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))
+    pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0)))))))) exk(c, s, 1, g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1)
+    * h1(g ^ r(1)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(s, s, c, 1, g ^ (r(3)
+    * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g
+    ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m3(c, c, s, 1,
+    h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^
+    (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^
+    r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(
+    is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(
+    g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(
+    1)) m1(ic, c, s, 1, c, g ^ r(0))) (sr[s,0]: r(2)) (sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[
+    is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]:
+    false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (
+    rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,
+    0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (
+    rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,
+    1]: true) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false)
+    (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: true) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,
+    s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ crl ks: (Ks K) nw: (NW m2(S1, S, C, SID, KS1) m1(C1, C, S, SID, C, KC1)) => ks: (Ks K) nw: (((NW m1(C1, C, S, SID,
+    C, KC1)) m2(S1, S, C, SID, KS1)) m3(ic, C, S, SID, h4(KC1, KS1, K))) if not (C == ic or S == is) = true [label
+    fake3-2] . ]===>
+state 121355, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2)
+    * (pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2)
+    * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) +
+    r(0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1)
+    * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))
+    crs: empty srs: (r(2) r(3)) ks: (g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) *
+    h1(g ^ r(1))))))) g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(
+    1)))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0)))))))) exk(c, s, 1, g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c,
+    s) + r(1) * h1(g ^ r(1)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(s, s, c, 1,
+    g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^
+    r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m3(
+    c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g
+    ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m3(ic, c, s, 1, h4(g ^ r(0), g ^ (r(3) * (pwd(c, s) +
+    r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(
+    1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0)
+    * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) *
+    (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(
+    1) * h1(g ^ r(1))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1)) m1(ic, c, s, 1, c, g ^ r(0))) (sr[
+    s,0]: r(2)) (sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr)
+    (rm1[s,c,0]: true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]:
+    false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[
+    c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]:
+    true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[
+    is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: true) (rm4[c,is,0]: false) (rm4[c,is,1]:
+    false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (
+    done[c,s,1]: true) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[
+    ic,is,0]: false) done[ic,is,1]: false
+===[ crl vkss: VKSs exks: EXKs nw: (NW m2(S, S, C, SID, KS1) m3(C2, C, S, SID, VKC) m1(C1, C, S, SID, C, KC1)) (sr[S,
+    SID]: R) rm3[S,C,SID]: false => (vkss: (VKSs h3(KC1, KS1, (KC1 * g ^ h2(KC1, KS1)) ^ R)) (exks: (EXKs exk(S, C,
+    SID, ((KC1 * g ^ h2(KC1, KS1)) ^ R) ^ h(pwd(C, S), SID))) nw: ((((NW m1(C1, C, S, SID, C, KC1)) m2(S, S, C, SID,
+    KS1)) m3(C2, C, S, SID, VKC)) m4(S, S, C, SID, h3(KC1, KS1, ((KC1 * g ^ h2(KC1, KS1)) ^ R) ^ h(pwd(C, S), SID)))))
+    rm3[S,C,SID]: true) sr[S,SID]: R if VKC = h4(KC1, KS1, ((KC1 * g ^ h2(KC1, KS1)) ^ R) ^ h(pwd(C, S), SID)) [label
+    send4] . ]===>
+state 960364, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2)
+    * (pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2)
+    * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) +
+    r(0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1)
+    * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: (h3(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) h3(
+    g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * (r(0) + h2(g ^ r(0), g ^ (r(3) * (pwd(c, s) +
+    r(1) * h1(g ^ r(1))))))))) crs: empty srs: (r(2) r(3)) ks: (g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0), g ^
+    (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))) g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(
+    c, s) + r(1) * h1(g ^ r(1)))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^
+    r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(c, s, 1, g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^
+    r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^
+    r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 1, g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^
+    r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g
+    ^ r(0))))) m2(s, s, c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(
+    pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m3(ic, c, s, 1, h4(g ^ r(
+    0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0), g ^ (r(3) *
+    (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))),
+    g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(s, s, c,
+    1, h3(g ^ r(0), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(0) + h2(g ^ r(0),
+    g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) *
+    h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(
+    1))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1)) m1(ic, c, s, 1, c, g ^ r(0))) (sr[s,0]: r(2)) (
+    sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]:
+    true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[
+    is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]:
+    false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (
+    rm3[s,c,1]: true) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,
+    0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: true) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (
+    rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,
+    1]: true) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]:
+    false) done[ic,is,1]: false
+Maude>
+)
+
+***(
+==========================================
+search [3] in MAP4HTTP : init =>* SYS nw: (NW m2(S1, S, C, SID, KS1) m3(C, C, S, SID, h4(KC1, KS1, K)) m4(S2, S, C,
+    SID, h3(KC1, KS1, K)) m1(C, C, S, SID, C, KC1)) such that not (m2(S, S, C, SID, KS1) \in NW m2(S1, S, C, SID, KS1)
+    and m4(S, S, C, SID, h3(KC1, KS1, K)) \in NW m4(S2, S, C, SID, h3(KC1, KS1, K))) = true .
+
+Solution 1 (state 2021)
+states: 2022  rewrites: 159503 in 70ms cpu (69ms real) (2278614 rewrites/second)
+SYS --> sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: g ^ (r(2) * (pwd(c, s)
+    + r(0) * h1(g ^ r(0)))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c,
+    s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c,
+    s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g
+    ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0),
+    g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs: empty srs: r(2) ks: g ^ (r(3) * h(pwd(c, s), 1) * (r(1) +
+    h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(
+    pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(
+    pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) (sr[s,0]: r(2)) (sr[s,1]:
+    dr) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (
+    rm1[s,c,1]: false) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,
+    0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (
+    rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,
+    1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]:
+    false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[
+    ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]:
+    false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]:
+    false) done[ic,is,1]: false
+NW --> m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g
+    ^ r(0))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s),
+    0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0))
+S1 --> is
+S --> s
+C --> c
+SID --> 1
+KS1 --> g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))
+KC1 --> g ^ r(1)
+K --> g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))))))
+S2 --> is
+
+Solution 2 (state 5660)
+states: 5661  rewrites: 573180 in 320ms cpu (321ms real) (1791187 rewrites/second)
+SYS --> sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g
+    ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) +
+    h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) *
+    h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs: empty srs:
+    (r(2) r(3)) ks: g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(
+    1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0))))))))) (sr[s,0]: r(2)) (sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,
+    1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]:
+    false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (
+    rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,
+    0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (
+    rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,
+    1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]:
+    false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (
+    done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+NW --> m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g
+    ^ r(0))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s),
+    0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0))
+S1 --> s
+S --> s
+C --> c
+SID --> 1
+KS1 --> g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))
+KC1 --> g ^ r(1)
+K --> g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))))))
+S2 --> is
+
+Solution 3 (state 10434)
+states: 10435  rewrites: 922839 in 600ms cpu (606ms real) (1538065 rewrites/second)
+SYS --> sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: g ^ (r(2) * (pwd(c, s)
+    + r(0) * h1(g ^ r(0)))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c,
+    s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c,
+    s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g
+    ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0),
+    g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs: empty srs: r(2) ks: g ^ (r(3) * h(pwd(c, s), 1) * (r(1) +
+    h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(
+    pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(
+    pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) (sr[s,0]: r(2)) (sr[s,1]:
+    dr) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (
+    rm1[s,c,1]: false) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,
+    0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (
+    rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,
+    1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]:
+    false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[
+    ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]:
+    false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]:
+    false) done[ic,is,1]: false
+NW --> m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g
+    ^ r(0))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s),
+    0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(ic, c,
+    s, 0, c, g ^ r(0))
+S1 --> is
+S --> s
+C --> c
+SID --> 1
+KS1 --> g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))
+KC1 --> g ^ r(1)
+K --> g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))))))
+S2 --> is
+Maude>
+
+
+Maude> show path 2021 .
+state 0, Sys: sids: (0 1) sid: 1 cs: (c ic) ss: (s is) crl: (r(1) | nil) srl: (r(3) | nil) kcs: g ^ r(0) kss: g ^ (r(2)
+    * (pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) *
+    h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) vkss: h3(g ^ r(0), g ^ (
+    r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^
+    r(0)))))))) crs: empty srs: r(2) ks: empty pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) +
+    h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) +
+    h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c,
+    s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (
+    r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0))) (sr[s,0]: r(2)) (sr[s,1]: dr) (sr[s,2]: dr) (sr[s,3]:
+    dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: false) (rm1[s,ic,
+    0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]:
+    false) (rm2[c,s,0]: true) (rm2[c,s,1]: false) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[
+    ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]:
+    false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (
+    rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]:
+    false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (
+    done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ crl sid: SID cs: (C Cs) ss: (S Ss) crl: (R1 | RS) kcs: KCs nw: NW => sid: (SID + 1) cs: (C Cs) ss: (S Ss) crl: RS
+    kcs: (KCs g ^ R1) nw: (NW m1(C, C, S, SID, C, g ^ R1)) if not (C == ic and S == is) = true [label send1] . ]===>
+state 1, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: (r(3) | nil) kcs: (g ^ r(0) g ^ r(1)) kss: g ^ (r(
+    2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(
+    2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) vkss: h3(g ^ r(0), g
+    ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g
+    ^ r(0)))))))) crs: empty srs: r(2) ks: empty pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0)
+    + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0)
+    + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(
+    c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(s, s, c, 0, h3(g ^ r(0), g
+    ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(
+    c, s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1))) (sr[s,0]: r(2)) (sr[s,
+    1]: dr) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true)
+    (rm1[s,c,1]: false) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,
+    0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: false) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (
+    rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,
+    1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]:
+    false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[
+    ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]:
+    false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]:
+    false) done[ic,is,1]: false
+===[ crl srl: (R2 | RS) ks: Ks pws: (PWs PW) nw: (NW m1(C1, C, S, SID, C, KC1)) => srl: RS pws: (PWs PW) ks: (Ks ((KC1
+    * g ^ h2(KC1, (g ^ PW * KC1 ^ h1(KC1)) ^ R2)) ^ R2) ^ h(PW, SID)) nw: ((NW m1(C1, C, S, SID, C, KC1)) m2(is, S, C,
+    SID, (g ^ PW * KC1 ^ h1(KC1)) ^ R2)) if not (C == ic or S == is) = true [label fake2-1] . ]===>
+state 25, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(
+    pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) vkss: h3(g ^ r(0), g ^ (r(
+    2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0)))))))) crs: empty srs: r(2) ks: g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1)
+    * h1(g ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2)
+    * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2)
+    * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(
+    is, s, c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) +
+    r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0)
+    * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s,
+    1, c, g ^ r(1))) (sr[s,0]: r(2)) (sr[s,1]: dr) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]:
+    dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: false) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]:
+    false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: false) (
+    rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,
+    is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false)
+    (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,
+    0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]:
+    false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (
+    done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ rl vkcs: VKCs nw: (NW m2(S1, S, C, SID, KS1) m1(C, C, S, SID, C, g ^ R1)) rm2[C,S,SID]: false => vkcs: (VKCs h4(g
+    ^ R1, KS1, (KS1 ^ ((R1 + h2(g ^ R1, KS1)) / (pwd(C, S) + R1 * h1(g ^ R1)))) ^ h(pwd(C, S), SID))) nw: (((NW m1(C,
+    C, S, SID, C, g ^ R1)) m2(S1, S, C, SID, KS1)) m3(C, C, S, SID, h4(g ^ R1, KS1, (KS1 ^ ((R1 + h2(g ^ R1, KS1)) / (
+    pwd(C, S) + R1 * h1(g ^ R1)))) ^ h(pwd(C, S), SID)))) rm2[C,S,SID]: true [label send3] . ]===>
+state 267, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) *
+    h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) *
+    (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(
+    1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(
+    g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs: empty srs: r(2) ks: g ^ (r(3) * h(pwd(c, s), 1) *
+    (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2)
+    * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2)
+    * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g
+    ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(is, s, c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c,
+    c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^
+    r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1)
+    * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(
+    1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0)
+    * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s,
+    1, c, g ^ r(1))) (sr[s,0]: r(2)) (sr[s,1]: dr) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]:
+    dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: false) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]:
+    false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[
+    c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]:
+    false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[
+    is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]:
+    false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (
+    done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,
+    s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ crl ks: (Ks K) nw: (NW m2(S1, S, C, SID, KS1) m3(C2, C, S, SID, VKC) m1(C1, C, S, SID, C, KC1)) => ks: (Ks K) nw:
+    ((((NW m1(C1, C, S, SID, C, KC1)) m2(S1, S, C, SID, KS1)) m3(C2, C, S, SID, VKC)) m4(is, S, C, SID, h3(KC1, KS1,
+    K))) if not (C == ic or S == is) = true /\ VKC = h4(KC1, KS1, K) [label fake4-2] . ]===>
+state 2021, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) *
+    h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) *
+    (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(
+    1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(
+    g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs: empty srs: r(2) ks: g ^ (r(3) * h(pwd(c, s), 1) *
+    (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2)
+    * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2)
+    * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g
+    ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(is, s, c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c,
+    c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^
+    r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1)
+    * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(
+    1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0)
+    * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) *
+    (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(
+    1) * h1(g ^ r(1))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1))) (sr[s,0]: r(2)) (sr[s,1]: dr) (
+    sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,
+    1]: false) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]:
+    false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[
+    ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]:
+    false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (
+    rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]:
+    false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (
+    done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[
+    ic,is,1]: false
+Maude> show path 5660 .
+state 0, Sys: sids: (0 1) sid: 1 cs: (c ic) ss: (s is) crl: (r(1) | nil) srl: (r(3) | nil) kcs: g ^ r(0) kss: g ^ (r(2)
+    * (pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) *
+    h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) vkss: h3(g ^ r(0), g ^ (
+    r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^
+    r(0)))))))) crs: empty srs: r(2) ks: empty pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) +
+    h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) +
+    h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c,
+    s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (
+    r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0))) (sr[s,0]: r(2)) (sr[s,1]: dr) (sr[s,2]: dr) (sr[s,3]:
+    dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: false) (rm1[s,ic,
+    0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]:
+    false) (rm2[c,s,0]: true) (rm2[c,s,1]: false) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[
+    ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]:
+    false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (
+    rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]:
+    false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (
+    done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ crl sid: SID cs: (C Cs) ss: (S Ss) crl: (R1 | RS) kcs: KCs nw: NW => sid: (SID + 1) cs: (C Cs) ss: (S Ss) crl: RS
+    kcs: (KCs g ^ R1) nw: (NW m1(C, C, S, SID, C, g ^ R1)) if not (C == ic and S == is) = true [label send1] . ]===>
+state 1, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: (r(3) | nil) kcs: (g ^ r(0) g ^ r(1)) kss: g ^ (r(
+    2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(
+    2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) vkss: h3(g ^ r(0), g
+    ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g
+    ^ r(0)))))))) crs: empty srs: r(2) ks: empty pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0)
+    + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0)
+    + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(
+    c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(s, s, c, 0, h3(g ^ r(0), g
+    ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(
+    c, s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1))) (sr[s,0]: r(2)) (sr[s,
+    1]: dr) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true)
+    (rm1[s,c,1]: false) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,
+    0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: false) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (
+    rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,
+    1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]:
+    false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[
+    ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]:
+    false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]:
+    false) done[ic,is,1]: false
+===[ rl srl: (R2 | RS) kss: KSs srs: Rs nw: (NW m1(C1, C, S, SID, C, KC1)) (sr[S,SID]: R) rm1[S,C,SID]: false => srl:
+    RS (kss: (KSs (g ^ pwd(C, S) * KC1 ^ h1(KC1)) ^ R2) (srs: if not (C == ic or S == is) then R2 Rs else Rs fi nw: ((
+    NW m1(C1, C, S, SID, C, KC1)) m2(S, S, C, SID, (g ^ pwd(C, S) * KC1 ^ h1(KC1)) ^ R2))) rm1[S,C,SID]: true) sr[S,
+    SID]: R2 [label send2] . ]===>
+state 17, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: h4(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0)))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^
+    r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs: empty srs: (r(2) r(3)) ks: empty pws: pwd(c, s) exks:
+    (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))
+    exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))))
+    nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(s, s, c, 1, g ^ (r(3) * (pwd(c, s) + r(1) *
+    h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c,
+    s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (
+    r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1))) (sr[s,0]: r(2)) (sr[s,1]:
+    r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (
+    rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,
+    0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: false) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (
+    rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,
+    1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]:
+    false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[
+    ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]:
+    false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]:
+    false) done[ic,is,1]: false
+===[ rl vkcs: VKCs nw: (NW m2(S1, S, C, SID, KS1) m1(C, C, S, SID, C, g ^ R1)) rm2[C,S,SID]: false => vkcs: (VKCs h4(g
+    ^ R1, KS1, (KS1 ^ ((R1 + h2(g ^ R1, KS1)) / (pwd(C, S) + R1 * h1(g ^ R1)))) ^ h(pwd(C, S), SID))) nw: (((NW m1(C,
+    C, S, SID, C, g ^ R1)) m2(S1, S, C, SID, KS1)) m3(C, C, S, SID, h4(g ^ R1, KS1, (KS1 ^ ((R1 + h2(g ^ R1, KS1)) / (
+    pwd(C, S) + R1 * h1(g ^ R1)))) ^ h(pwd(C, S), SID)))) rm2[C,S,SID]: true [label send3] . ]===>
+state 149, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(
+    1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) +
+    r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs:
+    empty srs: (r(2) r(3)) ks: empty pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(
+    0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(
+    0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^
+    r(0))))) m2(s, s, c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(
+    pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(
+    0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1))) (sr[s,0]: r(2)) (
+    sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]:
+    true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[
+    is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]:
+    false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (
+    rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,
+    0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (
+    rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,
+    1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]:
+    false) done[ic,is,1]: false
+===[ rl sids: (SID1 SIDs) kcs: (KCs KC) kss: (KSs KS) srs: (R Rs) ks: Ks pws: (PWs PW) => kcs: (KCs KC) kss: (KSs KS)
+    srs: (R Rs) pws: (PWs PW) sids: (SID1 SIDs) ks: (Ks ((KC * g ^ h2(KC, KS)) ^ R) ^ h(PW, SID1)) [label forge-key2] .
+    ]===>
+state 974, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(
+    1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) +
+    r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs:
+    empty srs: (r(2) r(3)) ks: g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g
+    ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(s, s,
+    c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) *
+    h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1)
+    * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1))) (sr[s,0]: r(2)) (sr[s,1]: r(3)) (
+    sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,
+    1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false)
+    (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]:
+    false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (
+    rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,
+    ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false)
+    (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,
+    is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,
+    1]: false
+===[ crl ks: (Ks K) nw: (NW m2(S1, S, C, SID, KS1) m3(C2, C, S, SID, VKC) m1(C1, C, S, SID, C, KC1)) => ks: (Ks K) nw:
+    ((((NW m1(C1, C, S, SID, C, KC1)) m2(S1, S, C, SID, KS1)) m3(C2, C, S, SID, VKC)) m4(is, S, C, SID, h3(KC1, KS1,
+    K))) if not (C == ic or S == is) = true /\ VKC = h4(KC1, KS1, K) [label fake4-2] . ]===>
+state 5660, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: (g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))) g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) vkcs: (h4(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) *
+    (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s)
+    + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs:
+    empty srs: (r(2) r(3)) ks: g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g
+    ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(s, s,
+    c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) *
+    h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1)
+    * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) *
+    h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m1(c, c, s, 0, c, g ^ r(
+    0)) m1(c, c, s, 1, c, g ^ r(1))) (sr[s,0]: r(2)) (sr[s,1]: r(3)) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,
+    1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: true) (rm1[s,ic,0]: false) (rm1[s,ic,1]:
+    false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (
+    rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,
+    0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (
+    rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,
+    1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]:
+    false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (
+    done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+Maude> show path 10434 .
+state 0, Sys: sids: (0 1) sid: 1 cs: (c ic) ss: (s is) crl: (r(1) | nil) srl: (r(3) | nil) kcs: g ^ r(0) kss: g ^ (r(2)
+    * (pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) *
+    h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) vkss: h3(g ^ r(0), g ^ (
+    r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^
+    r(0)))))))) crs: empty srs: r(2) ks: empty pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) +
+    h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) +
+    h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0)
+    * h1(g ^ r(0))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c,
+    s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (
+    r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c,
+    s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0))) (sr[s,0]: r(2)) (sr[s,1]: dr) (sr[s,2]: dr) (sr[s,3]:
+    dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: false) (rm1[s,ic,
+    0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]:
+    false) (rm2[c,s,0]: true) (rm2[c,s,1]: false) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[
+    ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]:
+    false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (
+    rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]:
+    false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (
+    done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ crl sid: SID cs: (C Cs) ss: (S Ss) crl: (R1 | RS) kcs: KCs nw: NW => sid: (SID + 1) cs: (C Cs) ss: (S Ss) crl: RS
+    kcs: (KCs g ^ R1) nw: (NW m1(C, C, S, SID, C, g ^ R1)) if not (C == ic and S == is) = true [label send1] . ]===>
+state 1, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: (r(3) | nil) kcs: (g ^ r(0) g ^ r(1)) kss: g ^ (r(
+    2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(
+    2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) vkss: h3(g ^ r(0), g
+    ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g
+    ^ r(0)))))))) crs: empty srs: r(2) ks: empty pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0)
+    + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0)
+    + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(
+    0) * h1(g ^ r(0))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(
+    c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(s, s, c, 0, h3(g ^ r(0), g
+    ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(
+    c, s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1))) (sr[s,0]: r(2)) (sr[s,
+    1]: dr) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true)
+    (rm1[s,c,1]: false) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,
+    0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: false) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (
+    rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,
+    1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]:
+    false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[
+    ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]:
+    false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]:
+    false) done[ic,is,1]: false
+===[ crl sids: (SID1 SIDs) cs: (C Cs) ss: (S Ss) nw: (NW m1(C1, C2, S1, SID, C3, KC1)) => cs: (C Cs) ss: (S Ss) sids: (
+    SID1 SIDs) nw: ((NW m1(C1, C2, S1, SID, C3, KC1)) m1(ic, C, S, SID1, C, KC1)) if not C1 == ic = true /\ not (C ==
+    ic or S == is) = true [label fake1] . ]===>
+state 18, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: (r(3) | nil) kcs: (g ^ r(0) g ^ r(1)) kss: g ^ (
+    r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (
+    r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) vkss: h3(g ^ r(0),
+    g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) *
+    h1(g ^ r(0)))))))) crs: empty srs: r(2) ks: empty pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) *
+    (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) *
+    (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s)
+    + r(0) * h1(g ^ r(0))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(
+    pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(s, s, c, 0, h3(g ^ r(
+    0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1)) m1(ic, c, s, 0, c,
+    g ^ r(0))) (sr[s,0]: r(2)) (sr[s,1]: dr) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (
+    sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: false) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false)
+    (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: false) (rm2[c,is,
+    0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]:
+    false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[
+    is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]:
+    false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (
+    done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,
+    s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ crl srl: (R2 | RS) ks: Ks pws: (PWs PW) nw: (NW m1(C1, C, S, SID, C, KC1)) => srl: RS pws: (PWs PW) ks: (Ks ((KC1
+    * g ^ h2(KC1, (g ^ PW * KC1 ^ h1(KC1)) ^ R2)) ^ R2) ^ h(PW, SID)) nw: ((NW m1(C1, C, S, SID, C, KC1)) m2(is, S, C,
+    SID, (g ^ PW * KC1 ^ h1(KC1)) ^ R2)) if not (C == ic or S == is) = true [label fake2-1] . ]===>
+state 184, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(
+    pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) vkss: h3(g ^ r(0), g ^ (r(
+    2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0)))))))) crs: empty srs: r(2) ks: g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1)
+    * h1(g ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2)
+    * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2)
+    * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(
+    is, s, c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) +
+    r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(
+    0))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0)
+    * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s,
+    1, c, g ^ r(1)) m1(ic, c, s, 0, c, g ^ r(0))) (sr[s,0]: r(2)) (sr[s,1]: dr) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]:
+    dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: false) (rm1[s,ic,0]: false) (rm1[
+    s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]:
+    true) (rm2[c,s,1]: false) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[
+    ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]:
+    false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (
+    rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,
+    0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (done[c,is,1]:
+    false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ rl vkcs: VKCs nw: (NW m2(S1, S, C, SID, KS1) m1(C, C, S, SID, C, g ^ R1)) rm2[C,S,SID]: false => vkcs: (VKCs h4(g
+    ^ R1, KS1, (KS1 ^ ((R1 + h2(g ^ R1, KS1)) / (pwd(C, S) + R1 * h1(g ^ R1)))) ^ h(pwd(C, S), SID))) nw: (((NW m1(C,
+    C, S, SID, C, g ^ R1)) m2(S1, S, C, SID, KS1)) m3(C, C, S, SID, h4(g ^ R1, KS1, (KS1 ^ ((R1 + h2(g ^ R1, KS1)) / (
+    pwd(C, S) + R1 * h1(g ^ R1)))) ^ h(pwd(C, S), SID)))) rm2[C,S,SID]: true [label send3] . ]===>
+state 1459, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: g ^ (r(2) * (
+    pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) *
+    h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) *
+    (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(
+    1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(
+    g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs: empty srs: r(2) ks: g ^ (r(3) * h(pwd(c, s), 1) *
+    (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2)
+    * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2)
+    * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g
+    ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(is, s, c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c,
+    c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^
+    r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1)
+    * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(
+    1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0)
+    * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s,
+    1, c, g ^ r(1)) m1(ic, c, s, 0, c, g ^ r(0))) (sr[s,0]: r(2)) (sr[s,1]: dr) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]:
+    dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]: true) (rm1[s,c,1]: false) (rm1[s,ic,0]: false) (rm1[
+    s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]:
+    true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[
+    ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]:
+    false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (
+    rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,
+    0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]: false) (done[c,is,1]:
+    false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]: false
+===[ crl ks: (Ks K) nw: (NW m2(S1, S, C, SID, KS1) m3(C2, C, S, SID, VKC) m1(C1, C, S, SID, C, KC1)) => ks: (Ks K) nw:
+    ((((NW m1(C1, C, S, SID, C, KC1)) m2(S1, S, C, SID, KS1)) m3(C2, C, S, SID, VKC)) m4(is, S, C, SID, h3(KC1, KS1,
+    K))) if not (C == ic or S == is) = true /\ VKC = h4(KC1, KS1, K) [label fake4-2] . ]===>
+state 10434, Sys: sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: g ^ (r(2) *
+    (pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) *
+    h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) *
+    (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(
+    1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(
+    g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs: empty srs: r(2) ks: g ^ (r(3) * h(pwd(c, s), 1) *
+    (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0, g ^ (r(2)
+    * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0, g ^ (r(2)
+    * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s, s, c, 0, g
+    ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(is, s, c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))) m3(c,
+    c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^
+    r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1)
+    * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(
+    1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0)
+    * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(is, s, c, 1, h3(g ^ r(1), g ^ (r(3) *
+    (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(
+    1) * h1(g ^ r(1))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1)) m1(ic, c, s, 0, c, g ^ r(0))) (sr[
+    s,0]: r(2)) (sr[s,1]: dr) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (
+    rm1[s,c,0]: true) (rm1[s,c,1]: false) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]:
+    false) (rm1[is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[
+    c,is,1]: false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]:
+    true) (rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[
+    is,ic,0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]:
+    false) (rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (
+    done[c,s,1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[
+    ic,is,0]: false) done[ic,is,1]: false
+Maude>
+)
+
+
