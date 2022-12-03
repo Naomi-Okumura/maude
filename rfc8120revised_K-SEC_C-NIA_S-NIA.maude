@@ -173,33 +173,6 @@ mod MAP4HTTP is
   *** initial state
   op init : -> Sys .
   eq init =
-  sids: (0 1) sid: 2 cs: (c ic) ss: (s is) crl: nil srl: nil kcs: (g ^ r(0) g ^ r(1)) kss: g ^ (r(2) * (
-    pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: (h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) *
-    h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) h4(g ^ r(1), g ^ (r(3) *
-    (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(
-    1) * h1(g ^ r(1))))))))) vkss: h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * (r(0) + h2(
-    g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) crs: (r(0) r(1)) srs: r(2) ks: g ^ (r(3) * h(pwd(c,
-    s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1))))))) pws: pwd(c, s) exks: (exk(c, s, 0,
-    g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) exk(s, c, 0,
-    g ^ (r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) nw: (m2(s,
-    s, c, 0, g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))) m2(is, s, c, 1, g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(
-    1))))) m3(c, c, s, 0, h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(pwd(c, s), 0) * (
-    r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m3(c, c, s, 1, h4(g ^ r(1), g ^ (r(3) * (
-    pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) * (pwd(c, s) + r(1)
-    * h1(g ^ r(1))))))))) m4(s, s, c, 0, h3(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (r(2) * h(
-    pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0))))))))) m4(is, s, c, 1, h3(g ^ r(
-    1), g ^ (r(3) * (pwd(c, s) + r(1) * h1(g ^ r(1)))), g ^ (r(3) * h(pwd(c, s), 1) * (r(1) + h2(g ^ r(1), g ^ (r(3) *
-    (pwd(c, s) + r(1) * h1(g ^ r(1))))))))) m1(c, c, s, 0, c, g ^ r(0)) m1(c, c, s, 1, c, g ^ r(1))) (sr[s,0]: r(2)) (
-    sr[s,1]: dr) (sr[s,2]: dr) (sr[s,3]: dr) (sr[is,0]: dr) (sr[is,1]: dr) (sr[is,2]: dr) (sr[is,3]: dr) (rm1[s,c,0]:
-    true) (rm1[s,c,1]: false) (rm1[s,ic,0]: false) (rm1[s,ic,1]: false) (rm1[is,c,0]: false) (rm1[is,c,1]: false) (rm1[
-    is,ic,0]: false) (rm1[is,ic,1]: false) (rm2[c,s,0]: true) (rm2[c,s,1]: true) (rm2[c,is,0]: false) (rm2[c,is,1]:
-    false) (rm2[ic,s,0]: false) (rm2[ic,s,1]: false) (rm2[ic,is,0]: false) (rm2[ic,is,1]: false) (rm3[s,c,0]: true) (
-    rm3[s,c,1]: false) (rm3[s,ic,0]: false) (rm3[s,ic,1]: false) (rm3[is,c,0]: false) (rm3[is,c,1]: false) (rm3[is,ic,
-    0]: false) (rm3[is,ic,1]: false) (rm4[c,s,0]: true) (rm4[c,s,1]: false) (rm4[c,is,0]: false) (rm4[c,is,1]: false) (
-    rm4[ic,s,0]: false) (rm4[ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,
-    1]: false) (done[c,is,0]: false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]:
-    false) done[ic,is,1]: false .
-***(
   sids: (0 1) sid: 1 cs: (c ic) ss: (s is) crl: (r(1) | nil) srl: (r(3) | nil) kcs: g ^ r(0) kss: g ^ (
     r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))) vkcs: h4(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))), g ^ (
     r(2) * h(pwd(c, s), 0) * (r(0) + h2(g ^ r(0), g ^ (r(2) * (pwd(c, s) + r(0) * h1(g ^ r(0)))))))) vkss: h3(g ^ r(0),
@@ -220,7 +193,7 @@ mod MAP4HTTP is
     ic,s,1]: false) (rm4[ic,is,0]: false) (rm4[ic,is,1]: false) (done[c,s,0]: true) (done[c,s,1]: false) (done[c,is,0]:
     false) (done[c,is,1]: false) (done[ic,s,0]: false) (done[ic,s,1]: false) (done[ic,is,0]: false) done[ic,is,1]:
     false .
-)
+
 ***(
   (sid: 0) (cs: (c ic)) (ss: (s is)) (sids: (0 1))
             (crl: (r(0) | r(1) | nil)) (srl: (r(2) | r(3) | nil))
@@ -255,12 +228,11 @@ mod MAP4HTTP is
   *** transitions
   crl [send1] :
   (sid: SID) (cs: (C Cs)) (ss: (S Ss)) (crl: (R1 | RS)) (kcs: KCs) (nw: NW)
-    (crs: Rs)
   =>
   (sid: (SID + 1)) (cs: (C Cs)) (ss: (S Ss)) (crl: RS) (kcs: (g ^ R1 KCs))
   (nw: (m1(C,C,S,SID,C,g ^ R1) NW))
-  (crs: (if not (C == ic or S == is) then (R1 Rs) else Rs fi)) ---added
   if not (C == ic and S == is) .
+  
   ***
   rl [send2] :
   (srl: (R2 | RS)) (sr[S,SID]: R) (kss: KSs) (rm1[S,C,SID]: false)
